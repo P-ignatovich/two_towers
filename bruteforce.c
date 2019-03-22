@@ -1,154 +1,201 @@
 #include <stdio.h>
-#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include "queue_qnode.h"
-#define MAX_N 6
 
-int ifUsed (int block_number, qnode_t *tower);
-void init (int *blocks, queue_t *queue, int n);
-void forkNode (qnode_t *tower, int block, queue_t *queue);
-void step (int *blocks, int *blocks_sum, int n, int *k, qnode_t *tower, qnode_t **storage, queue_t *queue);
-int findresult (qnode_t **storage, int k);
+void init(int *blocks, queue_t *queue, int n);
+void step(int *blocks, int maxSum, int n, int *inStorage, qnode_t node, queue_t *queue, qnode_t *storage);
+void forkNode(int *blocks, qnode_t node, int blockIndex, queue_t *queue);
+void deleteNode(qnode_t node);
+int ifUsed(int blockIndex, qnode_t node);
+void putInStorage(qnode_t node, qnode_t *storage, int *inStorage);
+void printStorage(qnode_t *storage, int inStorage, int *blocks);
+int findResult(qnode_t *storage, int k);
 
-
-int main (int argc, char **argv)
+int main(int argc, char **argv)
 {
-	int n = 6, k = 0, blocks_sum;
-	int blocks[6] = {1, 3, 2, 4, 6, 7};
-	
-	for (int i = 0; i < n; i++) {
-		blocks_sum = blocks_sum + blocks[i];
-	}
+  FILE *fpIn, *fpOut;
+  int n, size, inStorage, maxSum;
+	int *blocks;
+  time_t start, end;
+  struct tm *local;  
 
-	qnode_t **storage = calloc(10000, sizeof(unsigned long));
-	queue_t *queue = createQueue(10000);
+  if((fpIn = fopen("./testCases", "r")) == NULL) 
+  {
+    printf("error occured while opening testCase file\n");
+    exit(1);
+  }
+  if((fpOut = fopen("./out", "w+")) == NULL)
+  {
+    printf("error occured while creating out file\n");
+    exit(1);
+  }
+  fscanf(fpIn, "%d\n", &n);
+  printf("%d testcases\n", n);
+  fscanf(fpIn, "%d\n", &size);
+  printf("%d elements each\n", size);
 
-	init(blocks, queue, n);
+  qnode_t *storage = calloc(1000000, sizeof(qnode_t));
+  queue_t *queue = createQueue(1000000);
+  blocks = malloc(size * sizeof(int));
+  
+  
+  for(size_t i = 0; i < n; i++)
+  {
+    inStorage = 0;
+    maxSum = 0;
+    for(size_t j = 0; j < size; j++)
+    {
+      fscanf(fpIn, "%d ", blocks + j);
+    }
+    fprintf(fpOut, "Testcase # %ld\n", i + 1);
+    for(size_t j = 0; j < size; j++)
+    {
+      fprintf(fpOut, "%d ", blocks[j]);
+    }
+    fprintf(fpOut, "\n");
 
-	while (!isEmpty(queue)) {
-		step(blocks, &blocks_sum, n, &k, dequeue(queue), storage, queue);
+    for(size_t j = 0; j < size; j++) 
+    {
+      maxSum = maxSum + blocks[j];
+    }
+    maxSum = maxSum / 2;
+
+    init(blocks, queue, size);
+    while(!isEmpty(queue))
+    {
+      step(blocks, maxSum, size, &inStorage, dequeue(queue), queue, storage);
+    }
+    time(&start);
+    local = localtime(&start);
+    printf("%d:%d:%d - calculation started for %d nodes\n", local->tm_hour, local->tm_min, local->tm_sec, inStorage);
+    fprintf(fpOut, "maximal height of tower = %d\n", findResult(storage, inStorage));
+    time(&end);
+    local = localtime(&end);
+    printf("%d nodes calculated for %ld seconds\n", inStorage, end - start);
+  }
+  fclose(fpIn);
+  fclose(fpOut);
+}
+
+
+void init(int *blocks, queue_t *queue, int n) 
+{
+	for(size_t i = 0; i < n; i++) 
+  {
+		qnode_t temp;
+		temp.size = 1;
+		temp.indexes = calloc(1, sizeof(int));
+		*temp.indexes = i;
+		temp.sum = blocks[i];
+		enqueue(temp, queue);
 	};
-	
-	printf("towers in storage:\n");
-	for (int i = 0; i < k; i++) {
-		for (int j = 0; j < storage[i]->size; j++) {
-			printf("%d ", storage[i]->indexes[j]);
+} //init
+
+void step(int *blocks, int maxSum, int n, int *inStorage, qnode_t node, queue_t *queue, qnode_t *storage)
+{
+  putInStorage(node, storage, inStorage);
+  for(size_t i = 0; i < n; i++)
+  {
+    if(node.sum + blocks[i] <= maxSum) 
+    {
+      if(!ifUsed(i, node)) 
+      {
+        forkNode(blocks, node, i, queue);
+      }
+    }
+  }  
+} //step
+
+void deleteNode(qnode_t node) {
+	free(node.indexes);
+} //deleteNode
+
+int ifUsed(int blockIndex, qnode_t node) 
+{
+  for(size_t i = 0; i < node.size; i++)
+  {
+    if(node.indexes[i] == blockIndex) 
+    {
+      return 1;
+    }   
+  }
+  return 0;
+} //ifUsed
+
+void forkNode(int *blocks, qnode_t node, int blockIndex, queue_t *queue)
+{
+  qnode_t temp;
+  temp.size = node.size + 1;
+  temp.sum = node.sum + blocks[blockIndex];
+  temp.indexes = calloc(temp.size, sizeof(int));
+  memcpy(temp.indexes, node.indexes, node.size * sizeof(int));
+  temp.indexes[temp.size - 1] = blockIndex;
+  enqueue(temp, queue);  
+  
+  // for(int i = 0; i < temp.size; i++) 
+  // {
+	// 	printf("%5d", blocks[temp.indexes[i]]);
+	// };
+	// printf("\n");
+} //forkNode
+
+void putInStorage(qnode_t node, qnode_t *storage, int *inStorage)
+{
+  storage[(*inStorage)++] = node;
+} //putInStorage
+
+void printStorage(qnode_t *storage, int inStorage, int *blocks)
+{
+  printf("towers in storage:\n");
+	for(size_t i = 0; i < inStorage; i++) 
+  {
+		for(size_t j = 0; j < storage[i].size; j++) 
+    {
+			printf("%d ", storage[i].indexes[j]);
 		};
 		printf("\n");
-	}
-	printf("maximal height of equal towers = %d\n", findresult(storage, k));
+  }
+} //printStorage
 
-
-
-	// printf("queue initialized!\n");
-
-	// for(int i = 0; i < n; i++)
-	// {
-	// 	printf("%d ", queue->array[i]->indexes[0]);
-	// }int findresult (qnode_t **storage, int k)
-	// printf("\n");
-	
-
-	// while (!isEmpty(queue)) {
-	// 	printf("in cycle of dequeue\n");
-	// 	printf("queue front = %d; rear = %d; size = %d\n", queue->front, queue->rear, queue->size);
-	// 	// int temp = dequeue(queue)->indexes[0];
-	// 	qnode_t *temp = dequeue(queue);
-	// 	int block_val = temp->indexes[0];
-	// 	printf("dequeued valie = %d\n", block_val);
-
-	// }
-	
-	
-	return 0;	
-}
-
-void step (int *blocks, int *blocks_sum, int n, int *k, qnode_t *tower, qnode_t **storage, queue_t *queue)
+int findResult (qnode_t *storage, int k)
 {
-	storage[(*k)++] = tower;
-	if (tower->sum >= *blocks_sum/2) {
-		return ;
-	}
-	for (int i = 0; i < n; i++) {
-		if (!ifUsed(blocks[i], tower)) {
-			forkNode(tower, blocks[i], queue);
-		};
-		
-	};
-}
-
-int ifUsed (int block, qnode_t *tower)									//takes as arguments block and pointer to node 
-{																													//returns 1 if block is not used in tower
-	for (int i = 0; i < tower->size; i++) {
-		if (tower->indexes[i] == block) return 1;
-	};
-	return 0;
-}
-
-void forkNode (qnode_t *tower, int block, queue_t *queue) {		//creates next node in graph and puts in into queue
-	qnode_t *temp = calloc(1, sizeof(qnode_t));
-	temp->size = tower->size + 1;
-	temp->sum = tower->sum + block;
-	temp->indexes = calloc(temp->size, sizeof(int));
-	temp->indexes = tower->indexes;
-	temp->indexes[temp->size-1] = block;
-	enqueue(temp, queue);
-
-	for (int i = 0; i < temp->size; i++) {
-			printf("%d ", temp->indexes[i]);
-	};
-	printf("\n");
-
-}
-
-void init (int *blocks, queue_t *queue, int n) 
-{
-	for (int i = 0; i < n; i++) {
-		qnode_t *temp = calloc(1, sizeof(qnode_t));
-		temp->size = 1;
-		temp->indexes = calloc(1, sizeof(int));
-		*temp->indexes = blocks[i];
-		temp->sum = blocks[i];
-		enqueue(temp, queue);
-
-		// debugging code
-		// for(int j = 0; j < i; j++)
-		// {
-		// 	printf("%d ", queue->array[j]->indexes[0]);
-		// }
-		// printf("\n");
-		// printf("value %d enqueued\n", temp->indexes[0]);
-		// printf("queue front = %d; rear = %d; size = %d\n", queue->front, queue->rear, queue->size);
-	};
-}
-
-int findresult (qnode_t **storage, int k)
-{
-	int max_sum = 0;
-	for (int i = 0; i < k - 1; i++) {
-		if (storage[i]->sum > max_sum) {
-			for (int j = i + 1; j < k; j++) {
-				if (storage[i]->sum == storage[j]->sum) {
+	int maxSum = 0;
+	for(int i = k - 2; i >= 0; i--) 
+  {
+		if(storage[i].sum > maxSum) 
+    {
+			for(int j = k-1; j > i; j--) 
+      {
+				if(storage[i].sum == storage[j].sum) 
+        {
 					int if_compatible = 1;
-					int size_i = storage[i]->size;
-					int size_j = storage[j]->size;
-					for (int m = 0; m < size_i; m++) {
-						if (!if_compatible) {
+					int size_i = storage[i].size;
+					int size_j = storage[j].size;
+					for(int m = 0; m < size_i; m++) 
+          {
+						if(!if_compatible) 
+            {
 							break;
 						};						
-						for (int n = 0; n < size_j; n++) {
-							if (storage[i]->indexes[m] == storage[j]->indexes[n]) {
+						for(int n = 0; n < size_j; n++) 
+            {
+							if(storage[i].indexes[m] == storage[j].indexes[n]) 
+              {
 								if_compatible = 0;
 								break;
 							};
 						};
 					};
-					if (if_compatible) {
-						max_sum = storage[i]->sum;
+					if(if_compatible) 
+          {
+						maxSum = storage[i].sum;
 						break;
 					};
 				};
 			};
 		};
 	};
-	return max_sum;
-}
+
+	return maxSum;
+} //findResult

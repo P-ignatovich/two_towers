@@ -5,7 +5,7 @@
 queue_t *createQueue (int capacity)                                    //initializing queue
 {
   queue_t *queue = (queue_t*) calloc(1, sizeof(queue_t));              //allocating memory for structure that stores information on queue
-  queue->array = (qnode_t**) calloc(capacity, sizeof(qnode_t*));       //allocating memory for array for storing information
+  queue->array = (qnode_t*) calloc(capacity, sizeof(qnode_t));         //allocating memory for array for storing information
   queue->front = 0;                                                    //initializing index of front alement as 0
   queue->rear = -1;                                                    //initializing index of rear element as capacity - 1 to get 0 on first enqueue
   queue->size = 0;                                                     //size is for number of elements, currently contained in queue
@@ -13,50 +13,61 @@ queue_t *createQueue (int capacity)                                    //initial
   return queue;
 }
 
-void enqueue (qnode_t *val, queue_t *queue)
+void enqueue (qnode_t val, queue_t *queue)
 {
-  if (isFull(queue)) {
-    printf("unable to enqueue element: queue is full");
+  if (isFull(queue)) 
+  {
+    printf("unable to enqueue element: queue is full\n");
     return;
   }
-  if (queue->rear < queue->capacity - 1) {
+  if (queue->rear < queue->capacity - 1)
+  {
     queue->rear++;
   } else queue->rear = 0;
   queue->array[queue->rear] = val;
   queue->size++; 
 }
 
-qnode_t *dequeue (queue_t *queue)
+qnode_t dequeue (queue_t *queue)
 {
-  if (isEmpty(queue)) {
-    printf("unable to dequeue element: queue is empty");
-    return (qnode_t*)NULL ;
+  if (isEmpty(queue)) 
+  {
+    qnode_t a;
+    printf("unable to dequeue element: queue is empty\n");
+    return a ;
   }
-  int front_copy = queue->front;
-  if (queue->front < queue->capacity -1) {
-    queue->front++;
-  } else queue ->front = 0;
-  queue->size--;
-  return queue->array[front_copy];  
+  if (queue->front < queue->capacity -1) 
+  {
+    queue->size--;
+    return queue->array[queue->front++];
+  } else 
+  {
+    int frontCopy = queue->front;
+    queue ->front = 0;
+    queue->size--;
+    return queue->array[frontCopy];  
+  }
 }
 
 int isFull (queue_t *queue)
 {
-  if (queue->size == queue->capacity) {
+  if (queue->size == queue->capacity) 
+  {
     return 1;
   } else return 0;
 }
 
 int isEmpty (queue_t *queue)
 {
-  if (queue->size == 0) {
+  if (queue->size == 0) 
+  {
     return 1;
   } else return 0;
 }
 
-int deletqueue (queue_t *queue)
+int deleteQueue (queue_t *queue)
 {
-  free(*queue->array);
+  free(queue->array);
   free(queue);
   return 0;
 }
