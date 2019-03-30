@@ -2,7 +2,6 @@
 #include <stdlib.h>
 
 int solve(int *blocks, int n);
-void checkSolution ();
 
 int main(int argc, char **argv)
 {
@@ -75,7 +74,6 @@ int solve(int *blocks, int n)
     {
       A[i][j] = A[i - 1][j];
     }                                                               //
-
     for(size_t j = 0; j < maxSum; j++)
     {
       if(A[i-1][j] != -1)                                           //checking if tower with current delta exists
@@ -110,26 +108,3 @@ int solve(int *blocks, int n)
   }
   return A[n-1][0];
 } //solve
-
-void checkSolution ()
-{
-  FILE *fpBF, *fpDyn, *fpCheck;
-
-  if((fpBF = fopen("./BFout", "r")) == NULL)                
-  {
-    printf("error occured while opening bruteforce solution file\n");
-    exit(1);
-  }
-  if((fpDyn = fopen("./dynOut", "r")) == NULL)
-  {
-    printf("error occured while creating out file\n");
-    exit(1);
-  }
-  if((fpCheck = fopen("./check", "w+")) == NULL)
-  {
-    printf("error occured while opening check file");
-    exit(1);
-  }
-
-
-} //checkSolution
