@@ -1,33 +1,23 @@
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
-#include "queue_qnode.h"
-
-void init(int *blocks, queue_t *queue, int n);
-void step(int *blocks, int maxSum, int n, int *inStorage, qnode_t node, queue_t *queue, qnode_t *storage);
-void forkNode(int *blocks, qnode_t node, int blockIndex, queue_t *queue);
-void deleteNode(qnode_t node);
-int ifUsed(int blockIndex, qnode_t node);
-void putInStorage(qnode_t node, qnode_t *storage, int *inStorage);
-void printStorage(qnode_t *storage, int inStorage, int *blocks);
-int findResult(qnode_t *storage, int k);
+#include "bruteforce.h"
 
 int main(int argc, char **argv)
 {
-  FILE *fpIn, *fpOut;
+  FILE *fpIn, *fpOut;                                                   
   int n, size, inStorage, maxSum;
 	int *blocks;
   time_t start, end;
   struct tm *local;  
+  qnode_t *storage = calloc(1000000, sizeof(qnode_t));
+  queue_t *queue = createQueue(1000000);
 
-  if((fpIn = fopen("./testCases", "r")) == NULL) 
+  if((fpIn = fopen("./testCases", "r")) == NULL)                
   {
     printf("error occured while opening testCase file\n");
     exit(1);
   }
-  if((fpOut = fopen("./out", "w+")) == NULL)
+  if((fpOut = fopen("./BFout", "w+")) == NULL)
   {
-    printf("error occured while creating out file\n");
+    printf("error occured while creating output file\n");
     exit(1);
   }
   fscanf(fpIn, "%d\n", &n);
@@ -35,10 +25,7 @@ int main(int argc, char **argv)
   fscanf(fpIn, "%d\n", &size);
   printf("%d elements each\n", size);
 
-  qnode_t *storage = calloc(1000000, sizeof(qnode_t));
-  queue_t *queue = createQueue(1000000);
   blocks = malloc(size * sizeof(int));
-  
   
   for(size_t i = 0; i < n; i++)
   {
@@ -48,7 +35,7 @@ int main(int argc, char **argv)
     {
       fscanf(fpIn, "%d ", blocks + j);
     }
-    fprintf(fpOut, "Testcase # %ld\n", i + 1);
+    fprintf(fpOut, "#%ld\n", i + 1);
     for(size_t j = 0; j < size; j++)
     {
       fprintf(fpOut, "%d ", blocks[j]);
@@ -68,16 +55,19 @@ int main(int argc, char **argv)
     }
     time(&start);
     local = localtime(&start);
-    printf("%d:%d:%d - calculation started for %d nodes\n", local->tm_hour, local->tm_min, local->tm_sec, inStorage);
-    fprintf(fpOut, "maximal height of tower = %d\n", findResult(storage, inStorage));
+    printf("%02d:%02d:%02d - calculation started for %d nodes\n", local->tm_hour, local->tm_min, local->tm_sec, inStorage);
+    fprintf(fpOut, "%d\n", findResult(storage, inStorage));
     time(&end);
     local = localtime(&end);
     printf("%d nodes calculated for %ld seconds\n", inStorage, end - start);
+    for(size_t j = 0; j < inStorage; j++)
+    {
+      free(storage[j].indexes);
+    }
   }
   fclose(fpIn);
   fclose(fpOut);
 }
-
 
 void init(int *blocks, queue_t *queue, int n) 
 {
@@ -107,10 +97,6 @@ void step(int *blocks, int maxSum, int n, int *inStorage, qnode_t node, queue_t 
   }  
 } //step
 
-void deleteNode(qnode_t node) {
-	free(node.indexes);
-} //deleteNode
-
 int ifUsed(int blockIndex, qnode_t node) 
 {
   for(size_t i = 0; i < node.size; i++)
@@ -132,12 +118,6 @@ void forkNode(int *blocks, qnode_t node, int blockIndex, queue_t *queue)
   memcpy(temp.indexes, node.indexes, node.size * sizeof(int));
   temp.indexes[temp.size - 1] = blockIndex;
   enqueue(temp, queue);  
-  
-  // for(int i = 0; i < temp.size; i++) 
-  // {
-	// 	printf("%5d", blocks[temp.indexes[i]]);
-	// };
-	// printf("\n");
 } //forkNode
 
 void putInStorage(qnode_t node, qnode_t *storage, int *inStorage)
@@ -158,7 +138,7 @@ void printStorage(qnode_t *storage, int inStorage, int *blocks)
   }
 } //printStorage
 
-int findResult (qnode_t *storage, int k)
+int findResult(qnode_t *storage, int k)
 {
 	int maxSum = 0;
 	for(int i = k - 2; i >= 0; i--) 
@@ -196,6 +176,5 @@ int findResult (qnode_t *storage, int k)
 			};
 		};
 	};
-
 	return maxSum;
 } //findResult

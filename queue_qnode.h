@@ -14,7 +14,6 @@ typedef struct queue_t
   int front, rear, size, capacity;    //size is for number of elements currently contained in queue
 } queue_t;                            //capacity is for total capacity of queue             
 
-
 queue_t *createQueue (int capacity);        //takes number of elements as argument
 void enqueue (qnode_t val, queue_t *queue);
 qnode_t dequeue (queue_t *queue);

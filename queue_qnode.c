@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "queue_qnode.h"
 
 queue_t *createQueue (int capacity)                                    //initializing queue
@@ -26,7 +24,7 @@ void enqueue (qnode_t val, queue_t *queue)
   } else queue->rear = 0;
   queue->array[queue->rear] = val;
   queue->size++; 
-}
+} //enqueue
 
 qnode_t dequeue (queue_t *queue)
 {
@@ -47,7 +45,7 @@ qnode_t dequeue (queue_t *queue)
     queue->size--;
     return queue->array[frontCopy];  
   }
-}
+} //dequeue
 
 int isFull (queue_t *queue)
 {
@@ -55,7 +53,7 @@ int isFull (queue_t *queue)
   {
     return 1;
   } else return 0;
-}
+} //isFull
 
 int isEmpty (queue_t *queue)
 {
@@ -63,11 +61,11 @@ int isEmpty (queue_t *queue)
   {
     return 1;
   } else return 0;
-}
+} //isEmpty
 
 int deleteQueue (queue_t *queue)
 {
   free(queue->array);
   free(queue);
   return 0;
-}
+} //deleteQueue
